@@ -28,29 +28,29 @@ func (r *ProductRepositoty) GetProducts(productID, gender, style, size, limit st
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 AND ps.size = $2 AND g.gender_name = $3 ORDER BY p.product_id LIMIT $4`, style, size, gender, limit)
 	} else if style != "" && size != "" && gender == "" && limit != "" {
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 AND ps.size = $2 ORDER BY p.product_id LIMIT $3`, style, size, limit)
-	} else if style != "" && size == "" && gender != "" && limit != "" {
+	} else if style != "" && gender != "" && limit != "" {
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 AND g.gender_name = $2 ORDER BY p.product_id LIMIT $3`, style, gender, limit)
-	} else if style == "" && size != "" && gender != "" && limit != "" {
+	} else if size != "" && gender != "" && limit != "" {
 		rows, err = r.DB.Queryx(query+` WHERE ps.size = $1 AND g.gender_name = $2 ORDER BY p.product_id LIMIT $3`, size, gender, limit)
-	} else if style != "" && size == "" && gender == "" && limit != "" {
+	} else if style != "" && limit != "" {
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 ORDER BY p.product_id LIMIT $2`, style, limit)
-	} else if style == "" && size != "" && gender == "" && limit != "" {
+	} else if size != "" && limit != "" {
 		rows, err = r.DB.Queryx(query+` WHERE ps.size = $1 ORDER BY p.product_id LIMIT $2`, size, limit)
-	} else if style == "" && size == "" && gender != "" && limit != "" {
+	} else if gender != "" && limit != "" {
 		rows, err = r.DB.Queryx(query+` WHERE g.gender_name = $1  ORDER BY p.product_id LIMIT $2`, gender, limit)
 	} else if style != "" && size != "" && gender != "" {
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 AND ps.size = $2 AND g.gender_name = $3 ORDER BY p.product_id`, style, size, gender)
-	} else if style != "" && size != "" && gender == "" {
+	} else if style != "" && size != "" {
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 AND ps.size = $2 ORDER BY p.product_id`, style, size)
-	} else if style != "" && size == "" && gender != "" {
+	} else if style != "" && gender != "" {
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 AND g.gender_name = $2 ORDER BY p.product_id`, style, gender)
 	} else if style == "" && size != "" && gender != "" {
 		rows, err = r.DB.Queryx(query+` WHERE ps.size = $1 AND g.gender_name = $2 ORDER BY p.product_id`, size, gender)
-	} else if style != "" && size == "" && gender == "" {
+	} else if style != "" {
 		rows, err = r.DB.Queryx(query+` WHERE s.style_name = $1 ORDER BY p.product_id`, style)
-	} else if style == "" && size != "" && gender == "" {
+	} else if size != "" {
 		rows, err = r.DB.Queryx(query+` WHERE ps.size = $1 ORDER BY p.product_id`, size)
-	} else if style == "" && size == "" && gender != "" {
+	} else if gender != "" {
 		rows, err = r.DB.Queryx(query+` WHERE g.gender_name = $1  ORDER BY p.product_id`, gender)
 	} else if productID != "" {
 		rows, err = r.DB.Queryx(query+` WHERE p.product_id = $1 ORDER BY p.product_id`, productID)
