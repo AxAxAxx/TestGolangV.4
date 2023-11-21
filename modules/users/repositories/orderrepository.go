@@ -92,23 +92,23 @@ func (r *OrderRepositoty) GetOrders(id string, fname string, lname string, phone
 	if id != "" {
 		rows, err = r.DB.Queryx(q+` WHERE o.order_id = $1`, id)
 	} else if fname != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.first_name = $1 BY o.order_id LIMIT $2`, fname, limit)
+		rows, err = r.DB.Queryx(q+` WHERE u.first_name = $1 ORDER BY o.order_id LIMIT $2`, fname, limit)
 	} else if lname != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.last_name = $1 BY o.order_id LIMIT $2`, lname, limit)
+		rows, err = r.DB.Queryx(q+` WHERE u.last_name = $1 ORDER BY o.order_id LIMIT $2`, lname, limit)
 	} else if phonenumber != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.phonenumber = $1 BY o.order_id LIMIT $2`, phonenumber, limit)
+		rows, err = r.DB.Queryx(q+` WHERE u.phonenumber = $1 ORDER BY o.order_id LIMIT $2`, phonenumber, limit)
 	} else if startdate != "" && enddate != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE o.start_date = $1 AND o.end_date = $2 BY o.order_id LIMIT $2`, startdate, enddate, limit)
+		rows, err = r.DB.Queryx(q+` WHERE o.start_date = $1 AND o.end_date = $2 ORDER BY o.order_id LIMIT $2`, startdate, enddate, limit)
 	} else if status != "" && limit != "" {
 		rows, err = r.DB.Queryx(q+` WHERE os.status = $1 ORDER BY o.order_id LIMIT $2`, status, limit)
 	} else if fname != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.first_name = $1 BY o.order_id`, fname)
+		rows, err = r.DB.Queryx(q+` WHERE u.first_name = $1 ORDER BY o.order_id`, fname)
 	} else if lname != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.last_name = $1 BY o.order_id`, lname)
+		rows, err = r.DB.Queryx(q+` WHERE u.last_name = $1 ORDER BY o.order_id`, lname)
 	} else if phonenumber != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.phonenumber = $1 BY o.order_id`, phonenumber)
+		rows, err = r.DB.Queryx(q+` WHERE u.phonenumber = $1 ORDER BY o.order_id`, phonenumber)
 	} else if startdate != "" && enddate != "" {
-		rows, err = r.DB.Queryx(q+` WHERE o.start_date = $1 AND o.end_date = $2 BY o.order_id`, startdate, enddate)
+		rows, err = r.DB.Queryx(q+` WHERE o.start_date = $1 AND o.end_date = $2 ORDER BY o.order_id`, startdate, enddate)
 	} else if status != "" {
 		rows, err = r.DB.Queryx(q+` WHERE os.status = $1 ORDER BY o.order_id `, status)
 	}
