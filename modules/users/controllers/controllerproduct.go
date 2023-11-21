@@ -20,7 +20,8 @@ func (p *ProductHandler) GetProduct(c *fiber.Ctx) error {
 	gender := c.Params("gender")
 	style := c.Params("style")
 	size := c.Params("size")
-	products, err := p.ProductUsecase.GetProducts(productID, gender, style, size)
+	limit := c.Params("limit")
+	products, err := p.ProductUsecase.GetProducts(productID, gender, style, size, limit)
 	if err != nil {
 		return err
 	}

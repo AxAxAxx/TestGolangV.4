@@ -26,6 +26,15 @@ func Handlers(app *fiber.App, db *sqlx.DB) {
 	//GET Product 3 Filter
 	app.Get("/products/style&size&gender/:style/:size/:gender", productHandler.GetProduct)
 
+	app.Get("/productbysizelimit/:size/:limit", productHandler.GetProduct)
+	app.Get("/productbystylelimit/:style/:limit", productHandler.GetProduct)
+	app.Get("/productbygenderlimit/:gender/:limit", productHandler.GetProduct)
+	//GET Product 2 Filter
+	app.Get("/products/style&sizelimit/:style/:size/:limit", productHandler.GetProduct)
+	app.Get("/products/style&genderlimit/:style/:gender/:limit", productHandler.GetProduct)
+	app.Get("/products/size&genderlimit/:size/:gender/:limit", productHandler.GetProduct)
+	//GET Product 3 Filter
+	app.Get("/products/style&size&genderlimit/:style/:size/:gender/:limit", productHandler.GetProduct)
 	//Order
 	orderRepository := repositories.NewOrderRepository(db)
 	orderUsecase := usecases.NewOrderUsecase(*orderRepository)
@@ -38,6 +47,7 @@ func Handlers(app *fiber.App, db *sqlx.DB) {
 	app.Get("orderbyphonenumber/:phonenumber", orderHandler.GetOrders)
 	app.Get("orderbystatus/:status", orderHandler.GetOrders)
 	app.Get("orderbypaiddate/:startdate/:enddate", orderHandler.GetOrders)
+
 	app.Get("orderbyidlimit/:order_id/:limit", orderHandler.GetOrders)
 	app.Get("orderbyfirstnamelimit/:fname/:limit", orderHandler.GetOrders)
 	app.Get("orderbylastnamelimit/:lname/:limit", orderHandler.GetOrders)

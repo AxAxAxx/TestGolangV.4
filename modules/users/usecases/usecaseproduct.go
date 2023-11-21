@@ -15,8 +15,8 @@ func NewProductUsecase(ProductRepository repositories.ProductRepositoty) *Produc
 	}
 }
 
-func (u *ProductUsecase) GetProducts(productID, gender, style, size string) ([]entities.Product, error) {
-	products, err := u.ProductRepository.GetProducts(productID, gender, style, size, []entities.Product{})
+func (u *ProductUsecase) GetProducts(productID, gender, style, size, limit string) ([]entities.Product, error) {
+	products, err := u.ProductRepository.GetProducts(productID, gender, style, size, limit, []entities.Product{})
 	if err != nil {
 		return nil, err
 	}
