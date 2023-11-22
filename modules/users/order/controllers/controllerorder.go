@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/AxAxAxx/go-test-api/modules/entities"
-	"github.com/AxAxAxx/go-test-api/modules/users/usecases"
+	"github.com/AxAxAxx/go-test-api/modules/users/order/usecases"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -10,9 +10,9 @@ type OrderHandler struct {
 	OrderUsecase usecases.OrderUsecase
 }
 
-func NewOrderHandler(oroductUsecase usecases.OrderUsecase) *OrderHandler {
+func NewOrderHandler(poroductUsecase usecases.OrderUsecase) *OrderHandler {
 	return &OrderHandler{
-		OrderUsecase: oroductUsecase,
+		OrderUsecase: poroductUsecase,
 	}
 }
 

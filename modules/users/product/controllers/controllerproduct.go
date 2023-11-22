@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/AxAxAxx/go-test-api/modules/users/usecases"
+	"github.com/AxAxAxx/go-test-api/modules/users/product/usecases"
 	"github.com/gofiber/fiber/v2"
 )
 

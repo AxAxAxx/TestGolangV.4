@@ -37,6 +37,7 @@ type User struct {
 	LastName       string `db:"last_name"`
 	Email          string `db:"email"`
 	PhoneNumber    string `db:"phonenumber"`
+	DateOfBirth    string `db:"dete_of_birth"`
 	AddressDetails string `db:"address_details"`
 	PostalCode     string `db:"postal_code"`
 	Province       string `db:"province"`
@@ -58,4 +59,13 @@ type ShippingDetails struct {
 	PostalCode     string `db:"postal_code"`
 	Province       string `db:"province"`
 	Country        string `db:"country"`
+}
+
+type Account struct {
+	Account_id int       `db:"account_id"`
+	Username   string    `db:"username"`
+	Password   string    `db:"password"`
+	CreateAt   time.Time `db:"created_at"`
+	User_ID    int       `db:"user_id"`
+	Role_ID    int       `db:"role_id"`
 }

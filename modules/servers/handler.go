@@ -57,4 +57,12 @@ func Handlers(app *fiber.App, db *sqlx.DB) {
 
 	//Post
 	app.Post("/orders/create", orderHandler.CreateOrder)
+
+	userRepository := repositories.NewUserRepository(db)
+	userUsercase := usecases.NewUserUsecase(*userRepository)
+	userHandler := controllers.NewUserHandler(*userUsercase)
+	app.Post("account/user", userHandler.CreateUser)
+	app.Post("account/address", userHandler.AddAddress)
+	app.Post("account/create", userHandler.CreateAccount)
+
 }

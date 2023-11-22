@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"github.com/AxAxAxx/go-test-api/modules/entities"
-	"github.com/AxAxAxx/go-test-api/modules/users/repositories"
+	"github.com/AxAxAxx/go-test-api/modules/users/product/repositories"
 )
 
 type ProductUsecase struct {
