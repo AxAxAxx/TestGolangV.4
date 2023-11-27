@@ -31,15 +31,6 @@ func (h *ProductHandler) GetProduct(c *fiber.Ctx) error {
 	return c.JSON(entities.ProductsSuccessResponse(&products))
 }
 
-// func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
-// 	id := c.Params("productID")
-// 	products, err := h.ProductUsecase.GetProductByID(id)
-// 	if err != nil {
-// 		return c.JSON(entities.ErrorResponse(err))
-// 	}
-// 	return c.JSON(entities.ProductsSuccessResponse(&products))
-// }
-
 func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	var newProduct entities.Product
 

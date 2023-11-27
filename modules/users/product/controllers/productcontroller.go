@@ -23,14 +23,6 @@ func (u *ProductController) GetProducts(id, gender, style, size, limit string) (
 	return products, nil
 }
 
-// func (u *ProductController) GetProductByID(productID string) ([]entities.Product, error) {
-// 	products, err := u.ProductRepository.GetProductByID(productID, []entities.Product{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return products, nil
-// }
-
 func (u *ProductController) CreateProduct(newProduct entities.Product) error {
 	err := u.ProductRepository.CreateProduct(newProduct)
 	if err != nil {

@@ -153,14 +153,3 @@ func (r *OrderRepositoty) GetOrders(id, fname, lname, phonenumber, status, start
 	}
 	return order, nil
 }
-
-// err := r.DB.Select(&order, query, args...)
-// if err != nil {
-// 	log.Fatal(err)
-// }
-// var retrievedProduct []byte
-// var orders entities.Order
-// err = json.Unmarshal(retrievedProduct, &orders.ProductDetails)
-// if err != nil {
-// 	log.Fatal("Failed to unmarshal JSON data:", err)
-// }
