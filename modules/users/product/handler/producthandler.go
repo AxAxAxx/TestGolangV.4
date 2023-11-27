@@ -19,17 +19,26 @@ func NewProductHandler(ProductUsecase controllers.ProductController) *ProductHan
 }
 
 func (h *ProductHandler) GetProduct(c *fiber.Ctx) error {
-	productID := c.Params("productID")
-	gender := c.Params("gender")
-	style := c.Params("style")
-	size := c.Params("size")
-	limit := c.Params("limit")
-	products, err := h.ProductUsecase.GetProducts(productID, gender, style, size, limit)
+	id := c.Query("id", "")
+	gender := c.Query("gender", "")
+	style := c.Query("style", "")
+	size := c.Query("size", "")
+	limit := c.Query("limit", "")
+	products, err := h.ProductUsecase.GetProducts(id, gender, style, size, limit)
 	if err != nil {
 		return c.JSON(entities.ErrorResponse(err))
 	}
 	return c.JSON(entities.ProductsSuccessResponse(&products))
 }
+
+// func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
+// 	id := c.Params("productID")
+// 	products, err := h.ProductUsecase.GetProductByID(id)
+// 	if err != nil {
+// 		return c.JSON(entities.ErrorResponse(err))
+// 	}
+// 	return c.JSON(entities.ProductsSuccessResponse(&products))
+// }
 
 func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	var newProduct entities.Product
@@ -63,6 +72,7 @@ func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 
 	return c.JSON(entities.UpdateResponse())
 }
+
 func (h *ProductHandler) DeleteProduct(c *fiber.Ctx) error {
 	bookID, err := strconv.Atoi(c.Params("id"))
 	if err != nil {

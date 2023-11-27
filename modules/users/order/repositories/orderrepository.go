@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -99,34 +100,33 @@ func (r *OrderRepositoty) CreateOrder(newOrder entities.Order) error {
 	return nil
 }
 
-func (r *OrderRepositoty) GetOrders(id string, fname string, lname string, phonenumber string, status string, startdate string, enddate string, limit string, order []entities.Order) ([]entities.Order, error) {
-	q := `SELECT o.order_id, o.user_id, u.first_name, u.last_name, u.phonenumber, o.shipping_details, o.product_id,o.orderstatus_id, o.product_details, o.created_at, o.quantity, o.total_price, os.status, o.start_date, o.end_date
+func (r *OrderRepositoty) GetOrders(id, fname, lname, phonenumber, status, startdate, enddate, limit string, order []entities.Order) ([]entities.Order, error) {
+	query := `SELECT o.order_id, o.user_id, u.first_name, u.last_name, u.phonenumber, o.shipping_details, o.product_id,o.orderstatus_id, o.product_details, o.created_at, o.quantity, o.total_price, os.status, o.start_date, o.end_date
 		FROM public."order" o Join "user" u ON o.user_id = u.user_id
-		JOIN order_status os ON o.orderstatus_id = os.orderstatus_id`
-	rows, err := r.DB.Queryx(q)
+		JOIN order_status os ON o.orderstatus_id = os.orderstatus_id WHERE 1=1`
 	if id != "" {
-		rows, err = r.DB.Queryx(q+` WHERE o.order_id = $1`, id)
-	} else if fname != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.first_name = $1 ORDER BY o.order_id LIMIT $2`, fname, limit)
-	} else if lname != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.last_name = $1 ORDER BY o.order_id LIMIT $2`, lname, limit)
-	} else if phonenumber != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.phonenumber = $1 ORDER BY o.order_id LIMIT $2`, phonenumber, limit)
-	} else if startdate != "" && enddate != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE o.start_date = $1 AND o.end_date = $2 ORDER BY o.order_id LIMIT $2`, startdate, enddate, limit)
-	} else if status != "" && limit != "" {
-		rows, err = r.DB.Queryx(q+` WHERE os.status = $1 ORDER BY o.order_id LIMIT $2`, status, limit)
-	} else if fname != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.first_name = $1 ORDER BY o.order_id`, fname)
-	} else if lname != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.last_name = $1 ORDER BY o.order_id`, lname)
-	} else if phonenumber != "" {
-		rows, err = r.DB.Queryx(q+` WHERE u.phonenumber = $1 ORDER BY o.order_id`, phonenumber)
-	} else if startdate != "" && enddate != "" {
-		rows, err = r.DB.Queryx(q+` WHERE o.start_date = $1 AND o.end_date = $2 ORDER BY o.order_id`, startdate, enddate)
-	} else if status != "" {
-		rows, err = r.DB.Queryx(q+` WHERE os.status = $1 ORDER BY o.order_id `, status)
+		query += fmt.Sprintf(" AND o.order_id = '%s'", id)
 	}
+	if fname != "" {
+		query += fmt.Sprintf(" AND u.first_name = '%s'", fname)
+	}
+	if lname != "" {
+		query += fmt.Sprintf(" AND u.last_name = '%s'", lname)
+	}
+	if status != "" {
+		query += fmt.Sprintf(" AND os.status = '%s'", status)
+	}
+	if phonenumber != "" {
+		query += fmt.Sprintf(" AND u.phonenumber = '%s'", phonenumber)
+	}
+	if startdate != "" && enddate != "" {
+		query += fmt.Sprintf(" AND o.start_date = '%s' AND o.end_date = '%s'", startdate, enddate)
+	}
+	if limit != "" {
+		query += fmt.Sprintf(" LIMIT '%s'", limit)
+	}
+
+	rows, err := r.DB.Queryx(query)
 	if err != nil {
 		log.Fatal("Failed to execute the query:", err)
 	}
@@ -153,3 +153,14 @@ func (r *OrderRepositoty) GetOrders(id string, fname string, lname string, phone
 	}
 	return order, nil
 }
+
+// err := r.DB.Select(&order, query, args...)
+// if err != nil {
+// 	log.Fatal(err)
+// }
+// var retrievedProduct []byte
+// var orders entities.Order
+// err = json.Unmarshal(retrievedProduct, &orders.ProductDetails)
+// if err != nil {
+// 	log.Fatal("Failed to unmarshal JSON data:", err)
+// }

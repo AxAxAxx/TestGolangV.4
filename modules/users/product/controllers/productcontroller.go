@@ -15,13 +15,21 @@ func NewProductController(ProductRepository repositories.ProductRepositoty) *Pro
 	}
 }
 
-func (u *ProductController) GetProducts(productID, gender, style, size, limit string) ([]entities.Product, error) {
-	products, err := u.ProductRepository.GetProducts(productID, gender, style, size, limit, []entities.Product{})
+func (u *ProductController) GetProducts(id, gender, style, size, limit string) ([]entities.Product, error) {
+	products, err := u.ProductRepository.GetProducts(id, gender, style, size, limit, []entities.Product{})
 	if err != nil {
 		return nil, err
 	}
 	return products, nil
 }
+
+// func (u *ProductController) GetProductByID(productID string) ([]entities.Product, error) {
+// 	products, err := u.ProductRepository.GetProductByID(productID, []entities.Product{})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return products, nil
+// }
 
 func (u *ProductController) CreateProduct(newProduct entities.Product) error {
 	err := u.ProductRepository.CreateProduct(newProduct)

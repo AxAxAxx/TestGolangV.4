@@ -23,7 +23,7 @@ func (u *OrderController) CreateOrder(newOrder entities.Order) error {
 	return nil
 }
 
-func (u *OrderController) GetOrders(id string, fname string, lname string, phonenumber string, status string, startdate string, enddate string, limit string) ([]entities.Order, error) {
+func (u *OrderController) GetOrders(id, fname, lname, phonenumber, status, startdate, enddate, limit string) ([]entities.Order, error) {
 	orders, err := u.OrderRepository.GetOrders(id, fname, lname, phonenumber, status, startdate, enddate, limit, []entities.Order{})
 	if err != nil {
 		return nil, err

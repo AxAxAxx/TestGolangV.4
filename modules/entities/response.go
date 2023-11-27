@@ -68,14 +68,14 @@ func ErrorResponse(err error) *fiber.Map {
 
 func DeleteResponse() *fiber.Map {
 	return &fiber.Map{
-		"status": true,
+		"status": "success",
 		"data":   "delete successfully",
 		"err":    nil}
 }
 
 func UpdateResponse() *fiber.Map {
 	return &fiber.Map{
-		"status": true,
+		"status": "success",
 		"data":   "update successfully",
 		"err":    nil}
 }

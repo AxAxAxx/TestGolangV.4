@@ -31,14 +31,14 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 }
 
 func (o *OrderHandler) GetOrders(c *fiber.Ctx) error {
-	orderId := c.Params("order_id")
-	status := c.Params("status")
-	fname := c.Params("fname")
-	lname := c.Params("lname")
-	phonenumber := c.Params("phonenumber")
-	startdate := c.Params("startdate")
-	enddate := c.Params("enddate")
-	limit := c.Params("limit")
+	orderId := c.Query("order_id")
+	status := c.Query("status")
+	fname := c.Query("fname")
+	lname := c.Query("lname")
+	phonenumber := c.Query("phonenumber")
+	startdate := c.Query("startdate")
+	enddate := c.Query("enddate")
+	limit := c.Query("limit")
 	orders, err := o.OrderController.GetOrders(orderId, fname, lname, phonenumber, status, startdate, enddate, limit)
 	if err != nil {
 		return c.JSON(entities.ErrorResponse(err))
