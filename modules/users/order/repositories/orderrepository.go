@@ -75,6 +75,21 @@ func (r *OrderRepositoty) CreateOrder(newOrder entities.Order) error {
 		log.Fatal(err)
 	}
 
+	err = r.DB.Get(&productdetails, "SELECT stock FROM product WHERE product_id = $1", newOrder.ProductID)
+	if err != nil {
+		return err
+	}
+
+	if productdetails.Stock < newOrder.Quantity {
+		return err
+	}
+
+	updatedStock := productdetails.Stock - newOrder.Quantity
+	_, err = r.DB.Exec("UPDATE product SET stock = $1 WHERE product_id = $2", updatedStock, newOrder.ProductID)
+	if err != nil {
+		return err
+	}
+
 	_, err = r.DB.Exec(`INSERT INTO "order" (product_details, shipping_details, created_at, user_id, product_id, quantity, total_price, orderstatus_id, start_date, end_date) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 		jsonDataProduct, jsonDataShip, newOrder.CreatedAt, newOrder.UserID, newOrder.ProductID, newOrder.Quantity, newOrder.Total_Price, newOrder.OrderStatusID, newOrder.StartDate, newOrder.EndDate)
@@ -85,7 +100,7 @@ func (r *OrderRepositoty) CreateOrder(newOrder entities.Order) error {
 }
 
 func (r *OrderRepositoty) GetOrders(id string, fname string, lname string, phonenumber string, status string, startdate string, enddate string, limit string, order []entities.Order) ([]entities.Order, error) {
-	q := `SELECT o.order_id, o.user_id, u.first_name, u.last_name, u.phonenumber, o.shipping_details, o.product_id, o.product_details, o.created_at, o.quantity, o.total_price, os.status, o.start_date, o.end_date
+	q := `SELECT o.order_id, o.user_id, u.first_name, u.last_name, u.phonenumber, o.shipping_details, o.product_id,o.orderstatus_id, o.product_details, o.created_at, o.quantity, o.total_price, os.status, o.start_date, o.end_date
 		FROM public."order" o Join "user" u ON o.user_id = u.user_id
 		JOIN order_status os ON o.orderstatus_id = os.orderstatus_id`
 	rows, err := r.DB.Queryx(q)
@@ -122,7 +137,7 @@ func (r *OrderRepositoty) GetOrders(id string, fname string, lname string, phone
 
 	for rows.Next() {
 		var o entities.Order
-		err := rows.Scan(&o.OrderID, &o.UserID, &o.FirstName, &o.LastName, &o.PhoneNumber, &retrievedSipping, &o.ProductID, &retrievedProduct, &o.CreatedAt, &o.Quantity, &o.Total_Price, &o.OrderStatus, &o.StartDate, &o.EndDate)
+		err := rows.Scan(&o.OrderID, &o.UserID, &o.FirstName, &o.LastName, &o.PhoneNumber, &retrievedSipping, &o.ProductID, &o.OrderStatusID, &retrievedProduct, &o.CreatedAt, &o.Quantity, &o.Total_Price, &o.OrderStatus, &o.StartDate, &o.EndDate)
 		if err != nil {
 			log.Fatal("Failed to scan row:", err)
 		}

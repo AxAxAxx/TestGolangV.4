@@ -21,7 +21,7 @@ func main() {
 	app.Get("/", func(ctx *fiber.Ctx) error {
 		return ctx.Send([]byte("Welcome to the T-shirts Shop!"))
 	})
-	servers.Handlers(app, db.DB)
+	servers.Server(app, db.DB)
 
 	app.Listen(":3000")
 }

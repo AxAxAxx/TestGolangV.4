@@ -2,46 +2,31 @@ package controllers
 
 import (
 	"github.com/AxAxAxx/go-test-api/modules/entities"
-	"github.com/AxAxAxx/go-test-api/modules/users/order/usecases"
-	"github.com/gofiber/fiber/v2"
+	"github.com/AxAxAxx/go-test-api/modules/users/order/repositories"
 )
 
-type OrderHandler struct {
-	OrderUsecase usecases.OrderUsecase
+type OrderController struct {
+	OrderRepository repositories.OrderRepositoty
 }
 
-func NewOrderHandler(poroductUsecase usecases.OrderUsecase) *OrderHandler {
-	return &OrderHandler{
-		OrderUsecase: poroductUsecase,
+func NewOrderController(orderRepository repositories.OrderRepositoty) *OrderController {
+	return &OrderController{
+		OrderRepository: orderRepository,
 	}
 }
 
-func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
-	var newOrder entities.Order
-
-	if err := c.BodyParser(&newOrder); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
-	}
-
-	err := h.OrderUsecase.CreateOrder(newOrder)
+func (u *OrderController) CreateOrder(newOrder entities.Order) error {
+	err := u.OrderRepository.CreateOrder(newOrder)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		return err
 	}
 	return nil
 }
 
-func (o *OrderHandler) GetOrders(c *fiber.Ctx) error {
-	orderId := c.Params("order_id")
-	status := c.Params("status")
-	fname := c.Params("fname")
-	lname := c.Params("lname")
-	phonenumber := c.Params("phonenumber")
-	startdate := c.Params("startdate")
-	enddate := c.Params("enddate")
-	limit := c.Params("limit")
-	orders, err := o.OrderUsecase.GetOrders(orderId, fname, lname, phonenumber, status, startdate, enddate, limit)
+func (u *OrderController) GetOrders(id string, fname string, lname string, phonenumber string, status string, startdate string, enddate string, limit string) ([]entities.Order, error) {
+	orders, err := u.OrderRepository.GetOrders(id, fname, lname, phonenumber, status, startdate, enddate, limit, []entities.Order{})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return c.JSON(orders)
+	return orders, nil
 }
