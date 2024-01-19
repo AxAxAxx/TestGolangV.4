@@ -1,30 +1,34 @@
 package handler
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/AxAxAxx/go-test-api/modules/entities"
-	"github.com/AxAxAxx/go-test-api/modules/users/product/controllers"
+	"github.com/AxAxAxx/go-test-api/modules/users/product/usecase"
 	"github.com/gofiber/fiber/v2"
 )
 
 type ProductHandler struct {
-	ProductUsecase controllers.ProductController
+	ProductUsecase usecase.ProductUsecase
 }
 
-func NewProductHandler(ProductUsecase controllers.ProductController) *ProductHandler {
+func NewProductHandler(ProductUsecase usecase.ProductUsecase) *ProductHandler {
 	return &ProductHandler{
 		ProductUsecase: ProductUsecase,
 	}
 }
 
 func (h *ProductHandler) GetProduct(c *fiber.Ctx) error {
-	id := c.Query("id", "")
-	gender := c.Query("gender", "")
-	style := c.Query("style", "")
-	size := c.Query("size", "")
-	limit := c.Query("limit", "")
-	products, err := h.ProductUsecase.GetProducts(id, gender, style, size, limit)
+	id := c.Query("id")
+	gender := c.Query("gender")
+	style := c.Query("style")
+	size := c.Query("size")
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+	sorting := c.Query("sorting")
+	filter := []string{id, gender, style, size}
+	products, err := h.ProductUsecase.GetProducts(filter, sorting, limit, offset)
 	if err != nil {
 		return c.JSON(entities.ErrorResponse(err))
 	}
@@ -42,26 +46,26 @@ func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	if err != nil {
 		return c.JSON(entities.ErrorResponse(err))
 	}
+	fmt.Println(newProduct)
 	return c.JSON(entities.ProductSuccessResponse(newProduct))
 }
 
 func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
-	productID, err := strconv.Atoi(c.Params("ID"))
+	_, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.JSON(entities.ErrorResponse(err))
 	}
 
-	var updatedProduct entities.Product
+	var _, updatedProduct entities.Product
 	if err := c.BodyParser(&updatedProduct); err != nil {
 		return c.JSON(entities.ErrorResponse(err))
 	}
+	// err = h.ProductUsecase.UpdateProduct(productID, existingProduct, updatedProduct)
+	// if err != nil {
+	// 	return c.JSON(entities.ErrorResponse(err))
+	// }
 
-	err = h.ProductUsecase.UpdateProduct(productID, updatedProduct)
-	if err != nil {
-		return c.JSON(entities.ErrorResponse(err))
-	}
-
-	return c.JSON(entities.UpdateResponse())
+	return c.JSON(updatedProduct)
 }
 
 func (h *ProductHandler) DeleteProduct(c *fiber.Ctx) error {

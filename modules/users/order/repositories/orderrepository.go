@@ -1,9 +1,7 @@
 package repositories
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/AxAxAxx/go-test-api/modules/entities"
@@ -20,136 +18,271 @@ func NewOrderRepository(db *sqlx.DB) *OrderRepositoty {
 	}
 }
 
-func (r *OrderRepositoty) CreateOrder(newOrder entities.Order) error {
-	newOrder.CreatedAt = time.Now()
-	newOrder.StartDate = time.Now()
-	newOrder.EndDate = newOrder.StartDate.Add(24 * time.Hour)
-	var productdetails entities.Product
-	var user entities.User
-
-	queryproduct := `SELECT s.style_name, ps.size, g.gender_name, p.price
-	FROM public.product p JOIN style_product s ON p.styleproduct_id = s.style_id
-	JOIN gender_product g ON p.gender_id = g.gender_id
-	JOIN product_size ps ON p.productsize_id = ps.size_id
-	WHERE p.product_id = $1`
-
-	err := r.DB.QueryRowx(queryproduct, newOrder.ProductID).Scan(&productdetails.StyleProduct, &productdetails.Size, &productdetails.Gender, &productdetails.Price)
+// Create Order
+func (r *OrderRepositoty) CreateOrders(user_id float64, created_at, expired time.Time, shipping, newOrder entities.Order) (int, error) {
+	tx, err := r.DB.Beginx()
 	if err != nil {
-		return err
+		return 0, nil
 	}
-
-	newOrder.Total_Price = newOrder.Quantity * productdetails.Price
-
-	productdetail := entities.ProductDetails{
-		StyleProduct: productdetails.StyleProduct,
-		Size:         productdetails.Size,
-		Gender:       productdetails.Gender,
-		Price:        productdetails.Price,
-	}
-
-	jsonDataProduct, err := json.Marshal(productdetail)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+		}
+	}()
+	err = r.DB.QueryRowx(`INSERT INTO public."order"(
+							user_id, 
+							shipping_details, 
+							order_status_id, 
+							created_at, 
+							expired)
+						VALUES ($1, $2, $3, $4, $5) RETURNING order_id;`,
+		user_id, shipping.ShippingDetails, newOrder.OrderStatusID, created_at, expired).Scan(&newOrder.OrderID)
 	if err != nil {
-		log.Fatal(err)
+		tx.Rollback()
+		return 0, err
 	}
+	if err := tx.Commit(); err != nil {
+		return 0, nil
+	}
+	return newOrder.OrderID, nil
+}
 
-	queryshipaddress := `SELECT u.first_name, u.last_name, u.phonenumber, ua.address_details, ua.postal_code, ua.province, ua.country
-	FROM "user" u Join user_address ua ON ua.user_id = u.user_id
-	WHERE u.user_id = $1`
+func (r *OrderRepositoty) GetShipDetails(user_id float64, shipdetails entities.Order) (entities.Order, error) {
+	q := `SELECT jsonb_agg(address)
+	FROM (SELECT ua.address_details, ua.postal_code, pv.province_name, ua.country
+	FROM "user" u
+	Join user_address ua ON ua.user_id = u.user_id
+	Join province pv ON ua.province_id = pv.province_id
+	WHERE u.user_id = $1) as address`
 
-	err = r.DB.QueryRowx(queryshipaddress, newOrder.UserID).Scan(&user.FirstName, &user.LastName, &user.PhoneNumber, &user.AddressDetails, &user.PostalCode, &user.Province, &user.Country)
+	err := r.DB.Get(&shipdetails.ShippingDetails, q, user_id)
 	if err != nil {
-		return err
+		return shipdetails, err
 	}
+	return shipdetails, nil
+}
 
-	shipdetails := entities.ShippingDetails{
-		FirstName:      user.FirstName,
-		LastName:       user.LastName,
-		PhoneNumber:    user.PhoneNumber,
-		AddressDetails: user.AddressDetails,
-		PostalCode:     user.PostalCode,
-		Province:       user.Province,
-		Country:        user.Country,
-	}
-
-	jsonDataShip, err := json.Marshal(shipdetails)
+func (r *OrderRepositoty) AddProduct(order_id, total_price int, t_price []int, created_at time.Time, order_product entities.Order) error {
+	tx, err := r.DB.Beginx()
 	if err != nil {
-		log.Fatal(err)
+		return nil
 	}
-
-	err = r.DB.Get(&productdetails, "SELECT stock FROM product WHERE product_id = $1", newOrder.ProductID)
-	if err != nil {
-		return err
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+		}
+	}()
+	for indexOrder, productReq := range order_product.Products {
+		for indexTotalprice, price := range t_price {
+			if indexTotalprice == indexOrder {
+				total_price = price
+			}
+		}
+		_, err := r.DB.Exec(`INSERT INTO order_product 
+							(order_id, product_id, total_price, quantity, created_at) 
+							VALUES ($1, $2, $3, $4, $5)`,
+			order_id, productReq.ProductID, total_price, productReq.Quantity, created_at)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
-
-	if productdetails.Stock < newOrder.Quantity {
-		return err
-	}
-
-	updatedStock := productdetails.Stock - newOrder.Quantity
-	_, err = r.DB.Exec("UPDATE product SET stock = $1 WHERE product_id = $2", updatedStock, newOrder.ProductID)
-	if err != nil {
-		return err
-	}
-
-	_, err = r.DB.Exec(`INSERT INTO "order" (product_details, shipping_details, created_at, user_id, product_id, quantity, total_price, orderstatus_id, start_date, end_date) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-		jsonDataProduct, jsonDataShip, newOrder.CreatedAt, newOrder.UserID, newOrder.ProductID, newOrder.Quantity, newOrder.Total_Price, newOrder.OrderStatusID, newOrder.StartDate, newOrder.EndDate)
-	if err != nil {
-		return err
+	if err := tx.Commit(); err != nil {
+		return nil
 	}
 	return nil
 }
 
-func (r *OrderRepositoty) GetOrders(id, fname, lname, phonenumber, status, startdate, enddate, limit string, order []entities.Order) ([]entities.Order, error) {
-	query := `SELECT o.order_id, o.user_id, u.first_name, u.last_name, u.phonenumber, o.shipping_details, o.product_id,o.orderstatus_id, o.product_details, o.created_at, o.quantity, o.total_price, os.status, o.start_date, o.end_date
-		FROM public."order" o Join "user" u ON o.user_id = u.user_id
-		JOIN order_status os ON o.orderstatus_id = os.orderstatus_id WHERE 1=1`
-	if id != "" {
-		query += fmt.Sprintf(" AND o.order_id = '%s'", id)
+func (r *OrderRepositoty) GetPriceAndStock(ps entities.Price_Stock, op entities.Order) ([]entities.Price_Stock, error) {
+	var price_stock []entities.Price_Stock
+	for _, productReq := range op.Products {
+		queryproduct := `SELECT price, stock FROM public.product WHERE product_id = $1;`
+		err := r.DB.Get(&ps, queryproduct, productReq.ProductID)
+		if err != nil {
+			return nil, err
+		}
+		price_stock = append(price_stock, ps)
 	}
-	if fname != "" {
-		query += fmt.Sprintf(" AND u.first_name = '%s'", fname)
+	return price_stock, nil
+}
+
+func (r *OrderRepositoty) UpdatedStock(updatedStock []int, op entities.Order) error {
+	tx, err := r.DB.Beginx()
+	if err != nil {
+		return nil
 	}
-	if lname != "" {
-		query += fmt.Sprintf(" AND u.last_name = '%s'", lname)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+		}
+	}()
+	for index, productReq := range op.Products {
+		for i, value := range updatedStock {
+			if i == index {
+				_, err := r.DB.Exec(`UPDATE public.product SET stock=$1 WHERE product_id =$2`, value, productReq.ProductID)
+				if err != nil {
+					tx.Rollback()
+					return err
+				}
+			}
+		}
 	}
-	if status != "" {
-		query += fmt.Sprintf(" AND os.status = '%s'", status)
+	if err := tx.Commit(); err != nil {
+		return nil
 	}
-	if phonenumber != "" {
-		query += fmt.Sprintf(" AND u.phonenumber = '%s'", phonenumber)
+	return nil
+}
+
+// Get OrderByAdmin
+func (r *OrderRepositoty) GetOrdersByAdmid(filter []string, limit, sorting, offset string, order []entities.OrderRes) ([]entities.OrderRes, error) {
+
+	var (
+		queryCondition, empty []string
+		valueFilter           []interface{}
+		temp, s               string
+	)
+
+	q := []string{"AND o.order_id =", "AND u.first_name =", "AND u.last_name =", "AND os.status =",
+		"AND u.phonenumber =", "AND created_at =", "AND expired ="}
+
+	for index, value := range filter {
+		if value != "" {
+			valueFilter = append(valueFilter, value)
+			for indexQuery, valueQuery := range q {
+				if index == indexQuery {
+					queryCondition = append(queryCondition, valueQuery)
+				}
+			}
+		}
 	}
-	if startdate != "" && enddate != "" {
-		query += fmt.Sprintf(" AND o.start_date = '%s' AND o.end_date = '%s'", startdate, enddate)
+	for index, value := range queryCondition {
+		temp += func(i int) string {
+			empty = append(empty, value)
+			if i != len(queryCondition)-1 {
+				if empty != nil {
+					s = fmt.Sprintf("%s $%d ", empty[i], i+1)
+				}
+				return s
+			} else {
+				return fmt.Sprintf("%s $%d", empty[i], i+1)
+			}
+		}(index)
+	}
+
+	query := `SELECT
+    			o.order_id,
+				o.user_id,
+				u.first_name,
+				u.last_name,
+				u.phonenumber,
+				o.shipping_details,
+				o.order_status_id,
+				os.status,
+				o.created_at,
+				o.expired,
+				(
+					SELECT
+						jsonb_agg(x)
+					FROM (
+							SELECT
+								op.product_id,
+								p.product_id,
+								s.style_name,
+								ps.size,
+								g.gender_name,
+								op.quantity,
+								op.total_price
+							FROM product p
+								LEFT JOIN order_product op ON op.product_id = p.product_id
+								LEFT JOIN style_product s ON p.styleproduct_id = s.style_id
+								LEFT JOIN gender_product g ON p.gender_id = g.gender_id
+								LEFT JOIN product_size ps ON p.productsize_id = ps.size_id
+							WHERE op.order_id = o.order_id
+						) AS x
+				) AS product_details
+			FROM "order" o
+				LEFT JOIN "user" u ON o.user_id = u.user_id
+				LEFT JOIN order_status os ON o.order_status_id = os.orderstatus_id
+			WHERE 1=1 `
+
+	query += temp
+	if sorting != "" {
+		query += fmt.Sprintf(" ORDER BY o.order_id %s", sorting)
 	}
 	if limit != "" {
-		query += fmt.Sprintf(" LIMIT '%s'", limit)
+		query += fmt.Sprintf(" LIMIT %s", limit)
 	}
-
-	rows, err := r.DB.Queryx(query)
+	if offset != "" {
+		query += fmt.Sprintf(" OFFSET %s", offset)
+	}
+	fmt.Println(query)
+	rows, err := r.DB.Queryx(query, valueFilter...)
 	if err != nil {
-		log.Fatal("Failed to execute the query:", err)
+		return nil, err
 	}
 	defer rows.Close()
-
-	var retrievedProduct []byte
-	var retrievedSipping []byte
-
 	for rows.Next() {
-		var o entities.Order
-		err := rows.Scan(&o.OrderID, &o.UserID, &o.FirstName, &o.LastName, &o.PhoneNumber, &retrievedSipping, &o.ProductID, &o.OrderStatusID, &retrievedProduct, &o.CreatedAt, &o.Quantity, &o.Total_Price, &o.OrderStatus, &o.StartDate, &o.EndDate)
+		var o entities.OrderRes
+		err := rows.StructScan(&o)
 		if err != nil {
-			log.Fatal("Failed to scan row:", err)
-		}
-		err = json.Unmarshal(retrievedProduct, &o.ProductDetails)
-		if err != nil {
-			log.Fatal("Failed to unmarshal JSON data:", err)
-		}
-		err = json.Unmarshal(retrievedSipping, &o.ShippingDetails)
-		if err != nil {
-			log.Fatal("Failed to unmarshal JSON data:", err)
+			return nil, err
 		}
 		order = append(order, o)
 	}
 	return order, nil
 }
+
+// Get Order By user
+func (r *OrderRepositoty) GetOrders(id float64, order []entities.OrderRes) ([]entities.OrderRes, error) {
+	query := `SELECT
+    			o.order_id,
+				o.user_id,
+				u.first_name,
+				u.last_name,
+				u.phonenumber,
+				o.shipping_details,
+				o.order_status_id,
+				os.status,
+				o.created_at,
+				o.expired,
+				(
+					SELECT
+						jsonb_agg(x)
+					FROM (
+							SELECT
+								op.product_id,
+								p.product_id,
+								s.style_name,
+								ps.size,
+								g.gender_name,
+								op.quantity,
+								op.total_price
+							FROM product p
+								LEFT JOIN order_product op ON op.product_id = p.product_id
+								LEFT JOIN style_product s ON p.styleproduct_id = s.style_id
+								LEFT JOIN gender_product g ON p.gender_id = g.gender_id
+								LEFT JOIN product_size ps ON p.productsize_id = ps.size_id
+							WHERE op.order_id = o.order_id
+						) AS x
+				) AS product_details
+			FROM "order" o
+				LEFT JOIN "user" u ON o.user_id = u.user_id
+				LEFT JOIN order_status os ON o.order_status_id = os.orderstatus_id
+			WHERE u.user_id = $1 `
+	rows, err := r.DB.Queryx(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var o entities.OrderRes
+		err := rows.StructScan(&o)
+		if err != nil {
+			return nil, err
+		}
+		order = append(order, o)
+	}
+	return order, nil
+}
+
+//TODO : DELETE Order

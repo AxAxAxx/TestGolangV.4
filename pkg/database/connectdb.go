@@ -3,35 +3,24 @@ package database
 import (
 	"fmt"
 
+	"github.com/AxAxAxx/go-test-api/pkg/config"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
-
-type Config struct {
-	host     string
-	port     int
-	user     string
-	password string
-	dbname   string
-}
 
 type Database struct {
 	*sqlx.DB
 }
 
-func ConnPgSQL() (*Database, error) {
-	var config Config
-	config.host = "localhost"
-	config.port = 5432
-	config.user = "postgres"
-	config.password = "1234"
-	config.dbname = "testGolang"
-	connpostgre := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		config.host, config.port, config.user, config.password, config.dbname)
+func ConnPgSQL(cfg *config.Configs) (*Database, error) {
+	connpostgre := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.PostgreSQL.Host, cfg.PostgreSQL.Port, cfg.PostgreSQL.Username, cfg.PostgreSQL.Password, cfg.PostgreSQL.Database, cfg.PostgreSQL.SSLMode)
+
+	fmt.Println(connpostgre)
 	db, err := sqlx.Connect("postgres", connpostgre)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("-Connect Successful-")
+	fmt.Println("-Connect-")
 	return &Database{db}, nil
 }

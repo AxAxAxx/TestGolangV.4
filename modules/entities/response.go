@@ -1,24 +1,18 @@
 package entities
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
 func ProductSuccessResponse(data Product) *fiber.Map {
-	product := Product{
-		ProductID:    data.ProductID,
-		StyleGroup:   data.StyleGroup,
-		StyleProduct: data.StyleProduct,
-		Size:         data.Size,
-		Gender:       data.Gender,
-		Price:        data.Price,
-	}
 	return &fiber.Map{
 		"status": "success",
-		"data":   product,
+		"data":   data,
 		"error":  nil,
 	}
 }
 
-func ProductsSuccessResponse(data *[]Product) *fiber.Map {
+func ProductsSuccessResponse(data *[]ProductRes) *fiber.Map {
 	return &fiber.Map{
 		"status": "success",
 		"data":   data,
@@ -27,30 +21,14 @@ func ProductsSuccessResponse(data *[]Product) *fiber.Map {
 }
 
 func OrderSuccessResponse(data Order) *fiber.Map {
-	order := Order{
-		OrderID:         data.OrderID,
-		UserID:          data.UserID,
-		ProductID:       data.ProductID,
-		ProductDetails:  data.ProductDetails,
-		ShippingDetails: data.ShippingDetails,
-		CreatedAt:       data.CreatedAt,
-		FirstName:       data.FirstName,
-		LastName:        data.LastName,
-		PhoneNumber:     data.PhoneNumber,
-		Quantity:        data.Quantity,
-		Total_Price:     data.Total_Price,
-		OrderStatus:     data.OrderStatus,
-		StartDate:       data.StartDate,
-		EndDate:         data.EndDate,
-	}
 	return &fiber.Map{
 		"status": "success",
-		"data":   order,
+		"data":   data,
 		"error":  nil,
 	}
 }
 
-func OrdersSuccessResponse(data *[]Order) *fiber.Map {
+func OrdersSuccessResponse(data *[]OrderRes) *fiber.Map {
 	return &fiber.Map{
 		"status": "success",
 		"data":   data,
@@ -61,7 +39,7 @@ func OrdersSuccessResponse(data *[]Order) *fiber.Map {
 func ErrorResponse(err error) *fiber.Map {
 	return &fiber.Map{
 		"status": false,
-		"data":   "",
+		"data":   nil,
 		"error":  err.Error(),
 	}
 }
@@ -70,12 +48,14 @@ func DeleteResponse() *fiber.Map {
 	return &fiber.Map{
 		"status": "success",
 		"data":   "delete successfully",
-		"err":    nil}
+		"err":    nil,
+	}
 }
 
 func UpdateResponse() *fiber.Map {
 	return &fiber.Map{
 		"status": "success",
 		"data":   "update successfully",
-		"err":    nil}
+		"err":    nil,
+	}
 }
